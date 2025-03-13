@@ -8,7 +8,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Updated frontend URL
+    origin: ["http://localhost:3000", "https://meta-frontend-sand.vercel.app"],
     methods: ["GET", "POST"],
   },
 });
@@ -24,7 +24,7 @@ io.on("connection", (socket) => {
     if (!rooms[roomId]) {
       rooms[roomId] = new Set();
     }
-    
+
     rooms[roomId].add(peerId);
     socket.join(roomId);
 
@@ -33,18 +33,10 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
       console.log(`User ${peerId} disconnected`);
-      
-      if (rooms[roomId]) {
-        rooms[roomId].delete(peerId);
+      rooms[roomId]?.delete(peerId);
 
-        // Notify remaining users in the room
-        socket.to(roomId).emit("user-disconnected", peerId);
-        
-        // Remove room if empty
-        if (rooms[roomId].size === 0) {
-          delete rooms[roomId];
-        }
-      }
+      // Notify others in the room about the disconnected user
+      socket.to(roomId).emit("user-disconnected", peerId);
     });
   });
 });
